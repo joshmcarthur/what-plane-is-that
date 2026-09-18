@@ -1,0 +1,21 @@
+services:
+  api:
+    build: .
+    ports:
+      - "1320:1320"
+    environment:
+      OBSERVER_LAT: "-41.1097169"
+      OBSERVER_LNG: "174.8825824"
+      NEAREST_RADIUS_KM: "10"
+      NEAREST_MAX_ALT_FT: "15000"
+      NEAREST_MAX_SEEN_POS_S: "20"
+      CACHE_TTL_SECONDS: "8"
+      ADSBEXCHANGE_API_URL: "https://globe.adsbexchange.com/re-api/"
+      ADSBEXCHANGE_REFERER: "https://globe.adsbexchange.com/"
+      AIRCRAFT_DB_PREFIXES: "ZK"
+    volumes:
+      - what-plane-cache:/var/cache/what-plane
+    restart: unless-stopped
+
+volumes:
+  what-plane-cache:
