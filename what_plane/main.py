@@ -158,7 +158,7 @@ async def nearest() -> JSONResponse:
     )
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover - CLI entrypoint
     import uvicorn
 
     host = os.getenv("HOST", "0.0.0.0")
@@ -166,5 +166,5 @@ def main() -> None:
     uvicorn.run("what_plane.main:app", host=host, port=port, reload=False)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()
