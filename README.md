@@ -12,7 +12,13 @@ Google Home routine → HA script → what-plane /nearest → TTS response
 
 ### Docker
 
-Set your observer location in `docker-compose.yml`, then:
+Published images are available from GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/joshmcarthur/what-plane-is-that:0.1.0
+```
+
+Set your observer location in `docker-compose.yml`, then either pull a release tag or build locally:
 
 ```bash
 docker compose up --build
