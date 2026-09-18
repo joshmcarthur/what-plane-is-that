@@ -5,10 +5,10 @@ description = "Return the nearest aircraft to a lat/lng using ADS-B Exchange."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi==0.115.6",
+    "fastapi==0.141.1",
     "httpx==0.28.1",
-    "uvicorn[standard]==0.34.0",
-    "zstandard==0.23.0",
+    "uvicorn[standard]==0.53.0",
+    "zstandard==0.25.0",
 ]
 
 [project.scripts]
