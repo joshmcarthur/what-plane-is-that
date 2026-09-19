@@ -30,3 +30,70 @@ def test_load_observer_config_requires_coordinates(
 
     with pytest.raises(ValueError, match="OBSERVER_LAT is required"):
         load_observer_config()
+
+
+def test_load_observer_config_rejects_invalid_latitude(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("OBSERVER_LAT", "95")
+    monkeypatch.setenv("OBSERVER_LNG", "174.78")
+
+    with pytest.raises(ValueError, match="OBSERVER_LAT must be between"):
+        load_observer_config()
+
+
+def test_load_observer_config_rejects_invalid_longitude(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("OBSERVER_LAT", "-41.29")
+    monkeypatch.setenv("OBSERVER_LNG", "200")
+
+    with pytest.raises(ValueError, match="OBSERVER_LNG must be between"):
+        load_observer_config()
+
+
+def test_load_observer_config_rejects_invalid_radius(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("OBSERVER_LAT", "-41.29")
+    monkeypatch.setenv("OBSERVER_LNG", "174.78")
+    monkeypatch.setenv("NEAREST_RADIUS_KM", "0")
+
+    with pytest.raises(ValueError, match="NEAREST_RADIUS_KM must be greater than 0"):
+        load_observer_config()
+
+
+def test_load_observer_config_rejects_invalid_seen_position_window(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("OBSERVER_LAT", "-41.29")
+    monkeypatch.setenv("OBSERVER_LNG", "174.78")
+    monkeypatch.setenv("NEAREST_MAX_SEEN_POS_S", "-1")
+
+    with pytest.raises(ValueError, match="NEAREST_MAX_SEEN_POS_S must be between"):
+        load_observer_config()
+
+
+def test_load_observer_config_rejects_zero_seen_position_window(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("OBSERVER_LAT", "-41.29")
+    monkeypatch.setenv("OBSERVER_LNG", "174.78")
+    monkeypatch.setenv("NEAREST_MAX_SEEN_POS_S", "0")
+
+    with pytest.raises(
+        ValueError,
+        match="NEAREST_MAX_SEEN_POS_S must be greater than 0",
+    ):
+        load_observer_config()
+
+
+def test_load_observer_config_rejects_invalid_max_altitude(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("OBSERVER_LAT", "-41.29")
+    monkeypatch.setenv("OBSERVER_LNG", "174.78")
+    monkeypatch.setenv("NEAREST_MAX_ALT_FT", "70000")
+
+    with pytest.raises(ValueError, match="NEAREST_MAX_ALT_FT must be between"):
+        load_observer_config()

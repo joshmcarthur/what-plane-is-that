@@ -128,3 +128,16 @@ def test_nearest_requires_observer_config(client: TestClient) -> None:
     response = client.get("/nearest")
 
     assert response.status_code == 503
+
+
+def test_lifespan_loads_observer_config_from_env() -> None:
+    main_module.observer_config = None
+
+    with TestClient(main_module.app) as client:
+        response = client.get("/health")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["observer"]["lat"] == -41.29
+    assert body["observer"]["lng"] == 174.78
+    assert main_module.observer_config is not None

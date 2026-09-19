@@ -112,3 +112,87 @@ def test_build_summary_uses_flight_and_type() -> None:
     assert "ZKNAX" in summary
     assert "C172" in summary
     assert "1,200 feet" in summary
+
+
+def test_find_nearest_ignores_aircraft_outside_radius() -> None:
+    query = NearestQuery(lat=-41.29, lon=174.78, radius_km=1.0)
+    far = _aircraft(hex="far", lat=-42.0, lon=175.5, flight="FAR")
+
+    assert find_nearest([far], query) is None
+
+
+def test_find_nearest_prefers_lower_altitude_on_distance_tie() -> None:
+    query = NearestQuery(lat=-41.29, lon=174.78, radius_km=15.0)
+    low = _aircraft(
+        hex="low",
+        lat=-41.30,
+        lon=174.77,
+        alt_baro_ft=1000,
+        flight="LOW",
+    )
+    high = _aircraft(
+        hex="high",
+        lat=-41.30,
+        lon=174.77,
+        alt_baro_ft=5000,
+        flight="HIGH",
+    )
+
+    match = find_nearest([high, low], query)
+
+    assert match is not None
+    assert match.aircraft.hex == "low"
+
+
+def test_describe_aircraft_falls_back_to_type_and_registration() -> None:
+    by_type = _aircraft(hex="abc123", lat=-41.30, lon=174.77, type_code="C172")
+    by_registration = _aircraft(
+        hex="def456",
+        lat=-41.30,
+        lon=174.77,
+        type_code="",
+        registration="ZK-TEST",
+    )
+    generic = _aircraft(
+        hex="999999",
+        lat=-41.30,
+        lon=174.77,
+        type_code="",
+        registration="",
+    )
+
+    assert describe_aircraft(by_type) == "C172"
+    assert describe_aircraft(by_registration) == "ZK-TEST"
+    assert describe_aircraft(generic) == "aircraft"
+
+
+def test_build_summary_uses_registration_when_flight_missing() -> None:
+    query = NearestQuery(lat=-41.29, lon=174.78)
+    aircraft = _aircraft(
+        hex="abc123",
+        lat=-41.30,
+        lon=174.77,
+        registration="ZK-NAX",
+        type_code="C172",
+    )
+    match = find_nearest([aircraft], query)
+
+    assert match is not None
+    summary = build_summary(match)
+    assert summary.startswith("ZK-NAX,")
+
+
+def test_build_summary_uses_hex_and_unknown_altitude() -> None:
+    query = NearestQuery(lat=-41.29, lon=174.78)
+    aircraft = _aircraft(
+        hex="abc123",
+        lat=-41.30,
+        lon=174.77,
+        alt_baro_ft=None,
+    )
+    match = find_nearest([aircraft], query)
+
+    assert match is not None
+    summary = build_summary(match)
+    assert "aircraft abc123" in summary
+    assert "unknown altitude" in summary

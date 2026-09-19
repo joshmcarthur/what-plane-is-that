@@ -34,6 +34,14 @@ packages = ["what_plane"]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 
+[tool.coverage.run]
+source = ["what_plane"]
+
+[tool.coverage.report]
+fail_under = 95
+show_missing = true
+skip_covered = false
+
 [tool.ruff]
 target-version = "py312"
 line-length = 88
