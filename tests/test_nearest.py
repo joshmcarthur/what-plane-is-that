@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 import pytest
+from what_plane.adsbdb import Airport, FlightRoute
 from what_plane.bincraft import Aircraft
 from what_plane.nearest import (
     NearestQuery,
@@ -196,3 +197,38 @@ def test_build_summary_uses_hex_and_unknown_altitude() -> None:
     summary = build_summary(match)
     assert "aircraft abc123" in summary
     assert "unknown altitude" in summary
+
+
+def test_build_summary_includes_route_when_available() -> None:
+    query = NearestQuery(lat=-41.29, lon=174.78)
+    aircraft = _aircraft(
+        hex="abc123",
+        lat=-41.30,
+        lon=174.77,
+        flight="ANZ362M",
+        type_code="AT76",
+    )
+    match = find_nearest([aircraft], query)
+    route = FlightRoute(
+        callsign="ANZ362M",
+        airline="Air New Zealand",
+        origin=Airport(
+            icao="NZCH",
+            iata="CHC",
+            name="Christchurch International Airport",
+            municipality="Christchurch",
+        ),
+        destination=Airport(
+            icao="NZWN",
+            iata="WLG",
+            name="Wellington International Airport",
+            municipality="Wellington",
+        ),
+    )
+
+    assert match is not None
+    summary = build_summary(match, route)
+    assert "ANZ362M" in summary
+    assert "Christchurch" in summary
+    assert "Wellington" in summary
+    assert "Air New Zealand" in summary

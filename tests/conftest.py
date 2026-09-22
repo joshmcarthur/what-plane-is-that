@@ -26,6 +26,7 @@ def observer_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     monkeypatch.setenv("NEAREST_RADIUS_KM", "15")
     monkeypatch.setenv("NEAREST_MAX_ALT_FT", "15000")
     monkeypatch.setenv("NEAREST_MAX_SEEN_POS_S", "20")
+    monkeypatch.setenv("ADSBDB_ENABLED", "false")
     yield
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from what_plane.adsbdb import FlightRoute, airport_label
 from what_plane.aircraft_db import lookup_aircraft_name
 from what_plane.bincraft import Aircraft
 from what_plane.geo import (
@@ -79,14 +80,31 @@ def describe_aircraft(ac: Aircraft) -> str:
     return "aircraft"
 
 
-def build_summary(match: NearestMatch) -> str:
+def _article(phrase: str) -> str:
+    if not phrase:
+        return "a"
+    return "an" if phrase[0].lower() in {"a", "e", "i", "o", "u"} else "a"
+
+
+def _route_phrase(route: FlightRoute) -> str:
+    origin = airport_label(route.origin)
+    destination = airport_label(route.destination)
+    if route.airline:
+        return (
+            f"{_article(route.airline)} {route.airline} flight "
+            f"from {origin} to {destination}"
+        )
+    return f"a flight from {origin} to {destination}"
+
+
+def build_summary(match: NearestMatch, route: FlightRoute | None = None) -> str:
     ac = match.aircraft
     direction = cardinal_direction(match.bearing_deg)
     distance = format_distance_km(match.distance_km)
     aircraft_desc = describe_aircraft(ac)
 
     if ac.flight:
-        headline = ac.flight
+        headline = ac.flight.strip()
     elif ac.registration:
         headline = ac.registration
     else:
@@ -96,6 +114,12 @@ def build_summary(match: NearestMatch) -> str:
         altitude = "unknown altitude"
     else:
         altitude = f"{ac.alt_baro_ft:,} feet"
+
+    if route is not None:
+        return (
+            f"{headline}, {_route_phrase(route)}, "
+            f"a {aircraft_desc}, at {altitude}, {distance} to the {direction}"
+        )
 
     return (
         f"{headline}, a {aircraft_desc}, at {altitude}, {distance} to the {direction}"

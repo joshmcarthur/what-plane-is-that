@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import struct
+
 from tests.bincraft_fixtures import (
     build_bincraft_payload,
     build_compressed_bincraft_payload,
@@ -78,3 +80,23 @@ def test_decode_bincraft_ignores_truncated_tail_record() -> None:
     aircraft = decode_bincraft(payload, zstd_compressed=False)
 
     assert len(aircraft) == 1
+
+
+def test_decode_bincraft_reads_baro_altitude_from_s16_10() -> None:
+    stride = 108
+    record = bytearray(stride)
+    struct.pack_into("<I", record, 0, 0x00C87F39)
+    struct.pack_into("<i", record, 8, int(174.78 * 1_000_000))
+    struct.pack_into("<i", record, 12, int(-41.15 * 1_000_000))
+    struct.pack_into("<h", record, 16, 4)  # baro_rate: 32 fpm when decoded
+    struct.pack_into("<h", record, 20, 188)  # baro_alt: 4,700 ft when decoded
+    record[68] = 0  # airborne
+    record[73] = 0x10  # alt_baro valid
+
+    header = bytearray(stride)
+    struct.pack_into("<I", header, 8, stride)
+    payload = bytes(header) + bytes(record)
+    aircraft = decode_bincraft(payload, zstd_compressed=False)
+
+    assert len(aircraft) == 1
+    assert aircraft[0].alt_baro_ft == 4700
