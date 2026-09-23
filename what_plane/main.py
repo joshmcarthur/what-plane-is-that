@@ -8,7 +8,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from what_plane.adsbdb import AdsbDbClient, adsbdb_enabled, route_to_dict
 from what_plane.adsbexchange import AdsbExchangeClient, FetchResult
@@ -20,7 +20,7 @@ from what_plane.aircraft_db import (
 from what_plane.cache import AdsbFetchCache, cache_ttl_seconds
 from what_plane.config import ObserverConfig, load_observer_config
 from what_plane.geo import bounding_box, cardinal_direction, format_distance_km
-from what_plane.nearest import build_summary, find_nearest
+from what_plane.nearest import NearestMatch, NearestQuery, build_summary, find_nearest
 
 client = AdsbExchangeClient()
 adsbdb_client = AdsbDbClient()
@@ -58,17 +58,114 @@ def _require_observer_config() -> ObserverConfig:
 
 def _not_found_response(
     *,
-    config: ObserverConfig,
+    lat: float,
+    lng: float,
+    radius_km: float,
     aircraft_in_box: int,
 ) -> dict[str, Any]:
     return {
         "found": False,
-        "lat": config.lat,
-        "lng": config.lng,
-        "radius_km": config.radius_km,
+        "lat": lat,
+        "lng": lng,
+        "radius_km": radius_km,
         "aircraft_in_box": aircraft_in_box,
         "summary": "I don't see any aircraft nearby right now.",
     }
+
+
+def _found_response(
+    *,
+    match: NearestMatch,
+    lat: float,
+    lng: float,
+    radius_km: float,
+    aircraft_in_box: int,
+    fetched_at: float,
+    route: Any | None,
+) -> dict[str, Any]:
+    ac = match.aircraft
+    return {
+        "found": True,
+        "lat": lat,
+        "lng": lng,
+        "radius_km": radius_km,
+        "aircraft_in_box": aircraft_in_box,
+        "flight": ac.flight.strip() if ac.flight else None,
+        "registration": ac.registration or None,
+        "type": ac.type_code or None,
+        "type_name": lookup_aircraft_name(ac.hex),
+        "hex": ac.hex,
+        "altitude_ft": ac.alt_baro_ft,
+        "ground_speed_kts": round(ac.ground_speed_kts, 1),
+        "heading_deg": round(ac.track_deg, 1),
+        "distance_km": round(match.distance_km, 2),
+        "bearing_deg": round(match.bearing_deg, 1),
+        "direction": cardinal_direction(match.bearing_deg),
+        "distance_text": format_distance_km(match.distance_km),
+        "seen_pos_seconds_ago": ac.seen_pos_s,
+        "seen_seconds_ago": ac.seen_s,
+        "squawk": ac.squawk,
+        "rssi_db": round(ac.rssi_db, 1),
+        "route": route_to_dict(route) if route is not None else None,
+        "summary": build_summary(match, route),
+        "fetched_at": fetched_at,
+    }
+
+
+async def _lookup_route(flight: str | None) -> Any | None:
+    if not adsbdb_enabled() or not flight:
+        return None
+    try:
+        return await adsbdb_client.lookup_route(flight)
+    except Exception:
+        return None
+
+
+async def _nearest_lookup(
+    lat: float,
+    lng: float,
+    config: ObserverConfig,
+) -> dict[str, Any]:
+    global last_fetch
+
+    box = bounding_box(lat, lng, config.radius_km)
+
+    try:
+        cached = await fetch_cache.fetch(client, box)
+        last_fetch = cached
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Failed to fetch aircraft data from ADS-B Exchange: {exc}",
+        ) from exc
+
+    query = NearestQuery(
+        lat=lat,
+        lon=lng,
+        radius_km=config.radius_km,
+        max_alt_ft=config.max_alt_ft,
+        max_seen_pos_s=config.max_seen_pos_s,
+    )
+    match = find_nearest(cached.aircraft, query)
+
+    if match is None:
+        return _not_found_response(
+            lat=lat,
+            lng=lng,
+            radius_km=config.radius_km,
+            aircraft_in_box=len(cached.aircraft),
+        )
+
+    route = await _lookup_route(match.aircraft.flight)
+    return _found_response(
+        match=match,
+        lat=lat,
+        lng=lng,
+        radius_km=config.radius_km,
+        aircraft_in_box=len(cached.aircraft),
+        fetched_at=cached.fetched_at,
+        route=route,
+    )
 
 
 @app.get("/health")
@@ -108,67 +205,19 @@ async def health() -> dict[str, Any]:
 
 @app.get("/nearest")
 async def nearest() -> JSONResponse:
-    global last_fetch
-
     config = _require_observer_config()
-    box = bounding_box(config.lat, config.lng, config.radius_km)
+    body = await _nearest_lookup(config.lat, config.lng, config)
+    return JSONResponse(body)
 
-    try:
-        cached = await fetch_cache.fetch(client, box)
-        last_fetch = cached
-    except Exception as exc:
-        raise HTTPException(
-            status_code=502,
-            detail=f"Failed to fetch aircraft data from ADS-B Exchange: {exc}",
-        ) from exc
 
-    query = config.as_nearest_query()
-    match = find_nearest(cached.aircraft, query)
-
-    if match is None:
-        return JSONResponse(
-            _not_found_response(
-                config=config,
-                aircraft_in_box=len(cached.aircraft),
-            )
-        )
-
-    ac = match.aircraft
-    route = None
-    if adsbdb_enabled() and ac.flight:
-        try:
-            route = await adsbdb_client.lookup_route(ac.flight)
-        except Exception:
-            route = None
-
-    return JSONResponse(
-        {
-            "found": True,
-            "lat": config.lat,
-            "lng": config.lng,
-            "radius_km": config.radius_km,
-            "aircraft_in_box": len(cached.aircraft),
-            "flight": ac.flight.strip() if ac.flight else None,
-            "registration": ac.registration or None,
-            "type": ac.type_code or None,
-            "type_name": lookup_aircraft_name(ac.hex),
-            "hex": ac.hex,
-            "altitude_ft": ac.alt_baro_ft,
-            "ground_speed_kts": round(ac.ground_speed_kts, 1),
-            "heading_deg": round(ac.track_deg, 1),
-            "distance_km": round(match.distance_km, 2),
-            "bearing_deg": round(match.bearing_deg, 1),
-            "direction": cardinal_direction(match.bearing_deg),
-            "distance_text": format_distance_km(match.distance_km),
-            "seen_pos_seconds_ago": ac.seen_pos_s,
-            "seen_seconds_ago": ac.seen_s,
-            "squawk": ac.squawk,
-            "rssi_db": round(ac.rssi_db, 1),
-            "route": route_to_dict(route) if route is not None else None,
-            "summary": build_summary(match, route),
-            "fetched_at": cached.fetched_at,
-        }
-    )
+@app.get("/nearest/at")
+async def nearest_at(
+    lat: float = Query(..., ge=-90, le=90),
+    lng: float = Query(..., ge=-180, le=180),
+) -> JSONResponse:
+    config = _require_observer_config()
+    body = await _nearest_lookup(lat, lng, config)
+    return JSONResponse(body)
 
 
 def main() -> None:  # pragma: no cover - CLI entrypoint

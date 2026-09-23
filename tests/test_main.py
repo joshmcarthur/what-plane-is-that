@@ -192,3 +192,71 @@ def test_nearest_includes_route_from_adsbdb(
     assert body["route"]["destination_municipality"] == "Wellington"
     assert "Christchurch" in body["summary"]
     assert "Wellington" in body["summary"]
+
+
+def test_nearest_at_found(
+    client: TestClient,
+    sample_aircraft: Aircraft,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fetch_result = FetchResult(
+        aircraft=[sample_aircraft],
+        fetched_at=1_700_000_000.0,
+        source_url="https://example.test/",
+    )
+    monkeypatch.setattr(
+        main_module.client,
+        "fetch_box",
+        AsyncMock(return_value=fetch_result),
+    )
+
+    response = client.get("/nearest/at", params={"lat": -41.30, "lng": 174.77})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["found"] is True
+    assert body["lat"] == -41.30
+    assert body["lng"] == 174.77
+    assert body["flight"] == "TEST1"
+
+
+def test_nearest_at_invalid_lat(client: TestClient) -> None:
+    response = client.get("/nearest/at", params={"lat": 91, "lng": 174.77})
+
+    assert response.status_code == 422
+
+
+def test_nearest_at_invalid_lng(client: TestClient) -> None:
+    response = client.get("/nearest/at", params={"lat": -41.30, "lng": 181})
+
+    assert response.status_code == 422
+
+
+def test_nearest_at_missing_params(client: TestClient) -> None:
+    response = client.get("/nearest/at")
+
+    assert response.status_code == 422
+
+
+def test_nearest_has_no_query_params(
+    client: TestClient,
+    sample_aircraft: Aircraft,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fetch_result = FetchResult(
+        aircraft=[sample_aircraft],
+        fetched_at=1_700_000_000.0,
+        source_url="https://example.test/",
+    )
+    monkeypatch.setattr(
+        main_module.client,
+        "fetch_box",
+        AsyncMock(return_value=fetch_result),
+    )
+
+    response = client.get("/nearest")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["lat"] == -41.29
+    assert body["lng"] == 174.78
