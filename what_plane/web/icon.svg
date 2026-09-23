@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="what plane">
+  <defs>
+    <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#10233d" />
+      <stop offset="100%" stop-color="#050d18" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#sky)" />
+  <circle cx="256" cy="256" r="148" fill="none" stroke="#f5b942" stroke-width="10" opacity="0.45" />
+  <circle cx="256" cy="256" r="10" fill="#f5b942" />
+  <path
+    d="M256 108 L286 318 L256 286 L226 318 Z"
+    fill="#f5b942"
+  />
+  <path
+    d="M256 404 L236 286 L256 300 L276 286 Z"
+    fill="#8aa4c0"
+    opacity="0.8"
+  />
+  <text
+    x="256"
+    y="430"
+    text-anchor="middle"
+    font-family="Arial, sans-serif"
+    font-size="42"
+    font-weight="700"
+    fill="#e8f2ff"
+    letter-spacing="4"
+  >
+    WP
+  </text>
+</svg>
