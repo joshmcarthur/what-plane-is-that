@@ -68,6 +68,21 @@ Example response:
 }
 ```
 
+### `GET /nearest/at`
+
+Returns the nearest aircraft relative to the supplied coordinates. Intended for the on-the-go PWA.
+
+Query parameters:
+
+| Parameter | Range | Description |
+|-----------|-------|-------------|
+| `lat` | -90 to 90 | Observer latitude |
+| `lng` | -180 to 180 | Observer longitude |
+
+Filter values (`NEAREST_RADIUS_KM`, `NEAREST_MAX_ALT_FT`, `NEAREST_MAX_SEEN_POS_S`) still come from environment variables.
+
+Keep `/nearest/at` private. It turns the service into a general ADS-B lookup for any coordinates, so do not expose it on the public internet without additional protection.
+
 ### `GET /health`
 
 Service status and last fetch metadata.
