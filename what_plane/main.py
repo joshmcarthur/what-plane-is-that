@@ -6,10 +6,12 @@ import os
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from what_plane.adsbdb import AdsbDbClient, adsbdb_enabled, route_to_dict
 from what_plane.adsbexchange import AdsbExchangeClient, FetchResult
 from what_plane.aircraft_db import (
@@ -21,6 +23,8 @@ from what_plane.cache import AdsbFetchCache, cache_ttl_seconds
 from what_plane.config import ObserverConfig, load_observer_config
 from what_plane.geo import bounding_box, cardinal_direction, format_distance_km
 from what_plane.nearest import NearestMatch, NearestQuery, build_summary, find_nearest
+
+WEB_DIR = Path(__file__).resolve().parent / "web"
 
 client = AdsbExchangeClient()
 adsbdb_client = AdsbDbClient()
@@ -218,6 +222,15 @@ async def nearest_at(
     config = _require_observer_config()
     body = await _nearest_lookup(lat, lng, config)
     return JSONResponse(body)
+
+
+@app.get("/", include_in_schema=False)
+async def web_index() -> FileResponse:
+    return FileResponse(WEB_DIR / "index.html")
+
+
+if WEB_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=WEB_DIR), name="web")
 
 
 def main() -> None:  # pragma: no cover - CLI entrypoint

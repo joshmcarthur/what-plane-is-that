@@ -30,6 +30,9 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["what_plane"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"what_plane/web" = "what_plane/web"
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
