@@ -84,8 +84,9 @@ def decode_bincraft(data: bytes, zstd_compressed: bool = True) -> list[Aircraft]
 
         airground = record[68] & 0x0F
         on_ground = airground == 1
-        baro_alt = s16[8] * 25
-        alt_baro_ft = None if on_ground else baro_alt
+        baro_alt_valid = bool(record[73] & 0x10)
+        baro_alt = s16[10] * 25
+        alt_baro_ft = baro_alt if baro_alt_valid and not on_ground else None
 
         addr_type_id = (record[67] & 0xF0) >> 4
         rssi_raw = record[86] if len(record) > 86 else 0

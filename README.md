@@ -54,7 +54,17 @@ Example response:
   "altitude_ft": 1200,
   "distance_km": 3.2,
   "direction": "south-west",
-  "summary": "ZKNAX, a Cessna 172 Skyhawk, at 1,200 feet, 3.2 kilometres to the south-west"
+  "route": {
+    "callsign": "ANZ362M",
+    "airline": "Air New Zealand",
+    "origin_icao": "NZCH",
+    "origin_iata": "CHC",
+    "origin_municipality": "Christchurch",
+    "destination_icao": "NZWN",
+    "destination_iata": "WLG",
+    "destination_municipality": "Wellington"
+  },
+  "summary": "ANZ362M, an Air New Zealand flight from Christchurch to Wellington, a ATR 72, at 1,200 feet, 3.2 kilometres to the south-west"
 }
 ```
 
@@ -97,6 +107,10 @@ Expose the script to Google Assistant, then create a Google Home routine that ac
 | `CACHE_TTL_SECONDS` | `8` |
 | `ADSBEXCHANGE_API_URL` | `https://globe.adsbexchange.com/re-api/` |
 | `ADSBEXCHANGE_REFERER` | `https://globe.adsbexchange.com/` |
+| `ADSBDB_ENABLED` | `true` |
+| `ADSBDB_API_URL` | `https://api.adsbdb.com/v0/callsign` |
+| `ADSBDB_CACHE_TTL_SECONDS` | `300` |
+| `ADSBDB_TIMEOUT_S` | `10` |
 | `HOST` | `0.0.0.0` |
 | `PORT` | `1320` |
 | `AIRCRAFT_DB_ENABLED` | `true` |

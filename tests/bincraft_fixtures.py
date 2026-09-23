@@ -54,7 +54,9 @@ def build_bincraft_payload(
     )
     struct.pack_into("<H", record, 4, 50)
     struct.pack_into("<H", record, 6, 50)
-    struct.pack_into("<h", record, 16, alt_ft // 25)
+    struct.pack_into("<h", record, 16, 4)  # baro_rate at s16[8]
+    struct.pack_into("<h", record, 20, alt_ft // 25)  # baro_alt at s16[10]
+    record[73] = 0x10  # alt_baro valid
     struct.pack_into("<H", record, 32, 0x1200)
     struct.pack_into("<h", record, 34, 900)
     struct.pack_into("<h", record, 40, 16_200)

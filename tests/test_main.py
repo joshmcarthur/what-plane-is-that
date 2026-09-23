@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock
 import pytest
 import what_plane.main as main_module
 from fastapi.testclient import TestClient
+from what_plane.adsbdb import Airport, FlightRoute
 from what_plane.adsbexchange import FetchResult
 from what_plane.bincraft import Aircraft
 from what_plane.config import ObserverConfig
@@ -15,6 +16,7 @@ from what_plane.config import ObserverConfig
 @pytest.fixture(autouse=True)
 def reset_app_state() -> None:
     main_module.fetch_cache.clear()
+    main_module.adsbdb_client.clear_cache()
     main_module.last_fetch = None
     main_module.observer_config = ObserverConfig(
         lat=-41.29,
@@ -38,6 +40,7 @@ def test_health(client: TestClient) -> None:
     assert body["ok"] is True
     assert body["source"] == "adsbexchange"
     assert body["observer"]["lat"] == -41.29
+    assert body["adsbdb"]["enabled"] is False
 
 
 def test_nearest_found(
@@ -141,3 +144,51 @@ def test_lifespan_loads_observer_config_from_env() -> None:
     assert body["observer"]["lat"] == -41.29
     assert body["observer"]["lng"] == 174.78
     assert main_module.observer_config is not None
+
+
+def test_nearest_includes_route_from_adsbdb(
+    client: TestClient,
+    sample_aircraft: Aircraft,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ADSBDB_ENABLED", "true")
+    fetch_result = FetchResult(
+        aircraft=[sample_aircraft],
+        fetched_at=1_700_000_000.0,
+        source_url="https://example.test/",
+    )
+    route = FlightRoute(
+        callsign="TEST1",
+        airline="Example Air",
+        origin=Airport(
+            icao="NZCH",
+            iata="CHC",
+            name="Christchurch International Airport",
+            municipality="Christchurch",
+        ),
+        destination=Airport(
+            icao="NZWN",
+            iata="WLG",
+            name="Wellington International Airport",
+            municipality="Wellington",
+        ),
+    )
+    monkeypatch.setattr(
+        main_module.client,
+        "fetch_box",
+        AsyncMock(return_value=fetch_result),
+    )
+    monkeypatch.setattr(
+        main_module.adsbdb_client,
+        "lookup_route",
+        AsyncMock(return_value=route),
+    )
+
+    response = client.get("/nearest")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["route"]["origin_icao"] == "NZCH"
+    assert body["route"]["destination_municipality"] == "Wellington"
+    assert "Christchurch" in body["summary"]
+    assert "Wellington" in body["summary"]

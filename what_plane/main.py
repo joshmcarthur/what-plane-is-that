@@ -10,6 +10,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from what_plane.adsbdb import AdsbDbClient, adsbdb_enabled, route_to_dict
 from what_plane.adsbexchange import AdsbExchangeClient, FetchResult
 from what_plane.aircraft_db import (
     ensure_aircraft_db,
@@ -22,6 +23,7 @@ from what_plane.geo import bounding_box, cardinal_direction, format_distance_km
 from what_plane.nearest import build_summary, find_nearest
 
 client = AdsbExchangeClient()
+adsbdb_client = AdsbDbClient()
 fetch_cache = AdsbFetchCache(cache_ttl_seconds())
 started_at = time.time()
 last_fetch: FetchResult | None = None
@@ -98,6 +100,9 @@ async def health() -> dict[str, Any]:
             "cache_path": db_status.cache_path,
             "error": db_status.error,
         },
+        "adsbdb": {
+            "enabled": adsbdb_enabled(),
+        },
     }
 
 
@@ -129,6 +134,13 @@ async def nearest() -> JSONResponse:
         )
 
     ac = match.aircraft
+    route = None
+    if adsbdb_enabled() and ac.flight:
+        try:
+            route = await adsbdb_client.lookup_route(ac.flight)
+        except Exception:
+            route = None
+
     return JSONResponse(
         {
             "found": True,
@@ -136,7 +148,7 @@ async def nearest() -> JSONResponse:
             "lng": config.lng,
             "radius_km": config.radius_km,
             "aircraft_in_box": len(cached.aircraft),
-            "flight": ac.flight or None,
+            "flight": ac.flight.strip() if ac.flight else None,
             "registration": ac.registration or None,
             "type": ac.type_code or None,
             "type_name": lookup_aircraft_name(ac.hex),
@@ -152,7 +164,8 @@ async def nearest() -> JSONResponse:
             "seen_seconds_ago": ac.seen_s,
             "squawk": ac.squawk,
             "rssi_db": round(ac.rssi_db, 1),
-            "summary": build_summary(match),
+            "route": route_to_dict(route) if route is not None else None,
+            "summary": build_summary(match, route),
             "fetched_at": cached.fetched_at,
         }
     )
