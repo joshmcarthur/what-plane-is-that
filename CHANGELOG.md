@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/joshmcarthur/what-plane-is-that/compare/v0.3.0...v0.3.1) (2026-09-24)
+
+
+### Bug Fixes
+
+* **ci:** publish Docker images when release-please creates a release ([#12](https://github.com/joshmcarthur/what-plane-is-that/issues/12)) ([92278df](https://github.com/joshmcarthur/what-plane-is-that/commit/92278dfe92173db72233699659e5627fe41ba89c))
+
 ## [0.3.0](https://github.com/joshmcarthur/what-plane-is-that/compare/v0.2.0...v0.3.0) (2026-09-24)
 
 
