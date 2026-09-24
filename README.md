@@ -36,6 +36,17 @@ OBSERVER_LAT=-41.29 OBSERVER_LNG=174.78 AIRCRAFT_DB_PREFIXES=ZK \
 curl "http://localhost:1320/nearest"
 ```
 
+## On-the-go PWA
+
+The same FastAPI app serves a small installable web UI at `/`.
+
+1. Reach the service over **HTTPS** (or `localhost` during development) via your private tunnel or reverse proxy.
+2. Open `/` on your phone and tap **Locate & scan**.
+3. Optionally tap **Enable compass** to point toward the aircraft.
+4. Add to home screen to install the PWA.
+
+The PWA calls `GET /nearest/at` with your phone's GPS. Home Assistant keeps using parameter-free `GET /nearest`.
+
 ## API
 
 ### `GET /nearest`
