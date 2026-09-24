@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/joshmcarthur/what-plane-is-that/compare/v0.2.0...v0.3.0) (2026-09-24)
+
+
+### Features
+
+* add on-the-go PWA with compass UI ([301a681](https://github.com/joshmcarthur/what-plane-is-that/commit/301a6811dadf9a54a606183597e4252e1b1bb7fb))
+* add on-the-go PWA with compass UI ([668c5f4](https://github.com/joshmcarthur/what-plane-is-that/commit/668c5f4ff93b2ee27e5dd9bd63fc9d816140cb7c))
+
 ## [0.2.0](https://github.com/joshmcarthur/what-plane-is-that/compare/v0.1.0...v0.2.0) (2026-09-23)
 
 
