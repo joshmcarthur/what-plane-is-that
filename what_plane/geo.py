@@ -72,6 +72,18 @@ def cardinal_direction(bearing: float) -> str:
     return CARDINALS[index]
 
 
+FT_TO_M = 0.3048
+
+
+def elevation_deg(
+    distance_km: float,
+    altitude_ft: float,
+    observer_alt_m: float = 0.0,
+) -> float:
+    alt_m = altitude_ft * FT_TO_M - observer_alt_m
+    return math.degrees(math.atan2(alt_m, distance_km * 1000.0))
+
+
 def format_distance_km(distance_km: float) -> str:
     if distance_km < 1:
         metres = int(distance_km * 1000)

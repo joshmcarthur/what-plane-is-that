@@ -21,7 +21,12 @@ from what_plane.aircraft_db import (
 )
 from what_plane.cache import AdsbFetchCache, cache_ttl_seconds
 from what_plane.config import ObserverConfig, load_observer_config
-from what_plane.geo import bounding_box, cardinal_direction, format_distance_km
+from what_plane.geo import (
+    bounding_box,
+    cardinal_direction,
+    elevation_deg,
+    format_distance_km,
+)
 from what_plane.nearest import NearestMatch, NearestQuery, build_summary, find_nearest
 
 WEB_DIR = Path(__file__).resolve().parent / "web"
@@ -104,6 +109,9 @@ def _found_response(
         "heading_deg": round(ac.track_deg, 1),
         "distance_km": round(match.distance_km, 2),
         "bearing_deg": round(match.bearing_deg, 1),
+        "elevation_deg": None
+        if ac.alt_baro_ft is None
+        else round(elevation_deg(match.distance_km, ac.alt_baro_ft), 1),
         "direction": cardinal_direction(match.bearing_deg),
         "distance_text": format_distance_km(match.distance_km),
         "seen_pos_seconds_ago": ac.seen_pos_s,
