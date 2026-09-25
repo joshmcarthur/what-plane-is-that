@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/joshmcarthur/what-plane-is-that/compare/v0.3.1...v0.4.0) (2026-09-25)
+
+
+### Features
+
+* point at aircraft with ILS-style CDI bars ([#14](https://github.com/joshmcarthur/what-plane-is-that/issues/14)) ([45b74a4](https://github.com/joshmcarthur/what-plane-is-that/commit/45b74a4e0abaf6d504108d5a6a0d34241bb80335))
+
 ## [0.3.1](https://github.com/joshmcarthur/what-plane-is-that/compare/v0.3.0...v0.3.1) (2026-09-24)
 
 
