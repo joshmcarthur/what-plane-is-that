@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from unittest.mock import AsyncMock
 
 import pytest
@@ -218,6 +219,7 @@ def test_nearest_at_found(
     assert body["lat"] == -41.30
     assert body["lng"] == 174.77
     assert body["flight"] == "TEST1"
+    assert body["elevation_deg"] == 90.0
 
 
 def test_nearest_at_invalid_lat(client: TestClient) -> None:
@@ -260,3 +262,29 @@ def test_nearest_has_no_query_params(
     body = response.json()
     assert body["lat"] == -41.29
     assert body["lng"] == 174.78
+
+
+def test_nearest_elevation_is_null_when_altitude_unknown(
+    client: TestClient,
+    sample_aircraft: Aircraft,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    aircraft = replace(sample_aircraft, alt_baro_ft=None)
+    fetch_result = FetchResult(
+        aircraft=[aircraft],
+        fetched_at=1_700_000_000.0,
+        source_url="https://example.test/",
+    )
+    monkeypatch.setattr(
+        main_module.client,
+        "fetch_box",
+        AsyncMock(return_value=fetch_result),
+    )
+
+    response = client.get("/nearest/at", params={"lat": -41.30, "lng": 174.77})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["found"] is True
+    assert body["altitude_ft"] is None
+    assert body["elevation_deg"] is None

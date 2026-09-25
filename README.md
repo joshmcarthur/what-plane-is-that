@@ -42,7 +42,7 @@ The same FastAPI app serves a small installable web UI at `/`.
 
 1. Reach the service over **HTTPS** (or `localhost` during development) via your private tunnel or reverse proxy.
 2. Open `/` on your phone and tap **Locate & scan**.
-3. Optionally tap **Enable compass** to point toward the aircraft.
+3. Optionally tap **Enable pointing**. Center the two bars like an ILS: turn to move the vertical bar, raise or tilt the phone to move the horizontal bar. If the horizontal bar sits high, raise the phone.
 4. Add to home screen to install the PWA.
 
 The PWA calls `GET /nearest/at` with your phone's GPS. Home Assistant keeps using parameter-free `GET /nearest`.

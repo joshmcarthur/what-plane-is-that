@@ -5,14 +5,19 @@ const summary = $("summary");
 const details = $("details");
 const compass = $("compass");
 const needle = $("needle");
+const locBar = $("loc");
+const gsBar = $("gs");
 const bearing = $("bearing");
 const locate = $("locate");
 const refresh = $("refresh");
 const compassBtn = $("compass-btn");
 
+const CDI_OFFSET_REM = 3.4;
+
 let current = null;
-let heading = null;
-let compassOn = false;
+let orientation = null;
+let pointingOn = false;
+let observerAltM = 0;
 
 function setStatus(text, kind) {
   status.textContent = text;
@@ -29,19 +34,56 @@ function detail(label, value) {
   return wrap;
 }
 
+function sensorsReady() {
+  return (
+    pointingOn &&
+    orientation != null &&
+    orientation.heading != null &&
+    orientation.alpha != null &&
+    orientation.beta != null &&
+    orientation.gamma != null
+  );
+}
+
+function currentElevationDeg() {
+  if (current?.altitude_ft == null) return 0;
+  if (observerAltM) {
+    return Pointer.elevationDeg(current.distance_km, current.altitude_ft, observerAltM);
+  }
+  if (current.elevation_deg != null) return current.elevation_deg;
+  return Pointer.elevationDeg(current.distance_km, current.altitude_ft);
+}
+
 function updateCompass() {
   if (!current?.found || current.bearing_deg == null) {
     show(bearing, false);
     return;
   }
 
-  const deg = current.bearing_deg;
-  const rel = compassOn && heading != null ? deg - heading : deg;
-  needle.style.transform = `rotate(${rel}deg)`;
-  compass.classList.toggle("fallback", !compassOn || heading == null);
-  bearing.textContent = compassOn && heading != null
-    ? `Point toward ${current.direction}`
-    : `Bearing ${Math.round(deg)}° ${current.direction}`;
+  const ready = sensorsReady();
+  compass.classList.toggle("fallback", !ready);
+
+  if (!ready) {
+    compass.classList.remove("locked");
+    needle.style.transform = `rotate(${current.bearing_deg}deg)`;
+    bearing.textContent = `Bearing ${Math.round(current.bearing_deg)}° ${current.direction}`;
+    show(bearing, true);
+    return;
+  }
+
+  const deviation = Pointer.cdiDeviations({
+    alpha: orientation.alpha,
+    beta: orientation.beta,
+    gamma: orientation.gamma,
+    headingDeg: orientation.heading,
+    bearingDeg: current.bearing_deg,
+    elevationDeg: currentElevationDeg(),
+  });
+  const scale = CDI_OFFSET_REM / Pointer.FULL_SCALE_DEG;
+  locBar.style.transform = `translateX(${deviation.loc * scale}rem)`;
+  gsBar.style.transform = `translateY(${-deviation.gs * scale}rem)`;
+  compass.classList.toggle("locked", deviation.locked);
+  bearing.textContent = Pointer.cdiCaption(deviation);
   show(bearing, true);
 }
 
@@ -61,7 +103,7 @@ function render(data) {
     );
   }
   show(refresh, true);
-  show(compassBtn, data.found && !compassOn);
+  show(compassBtn, data.found && !pointingOn);
   updateCompass();
 }
 
@@ -89,7 +131,8 @@ async function runLookup() {
   setStatus("Getting location…", "loading");
   try {
     const pos = await getPosition();
-    const { latitude: lat, longitude: lng } = pos.coords;
+    const { latitude: lat, longitude: lng, altitude } = pos.coords;
+    observerAltM = Number.isFinite(altitude) ? altitude : 0;
     setStatus("Scanning nearby…", "loading");
     const data = await fetchNearest(lat, lng);
     render(data);
@@ -104,21 +147,36 @@ async function runLookup() {
   }
 }
 
-function readHeading(event) {
-  if (event.webkitCompassHeading != null) return event.webkitCompassHeading;
-  if (event.alpha != null) return 360 - event.alpha;
-  return null;
+function readOrientation(event) {
+  const beta = event.beta;
+  const gamma = event.gamma;
+  let heading = null;
+  let alpha = event.alpha;
+  if (event.webkitCompassHeading != null) {
+    heading = event.webkitCompassHeading;
+    alpha = (360 - event.webkitCompassHeading) % 360;
+  } else if (event.alpha != null) {
+    heading = (360 - event.alpha + 360) % 360;
+  }
+  if (heading == null || alpha == null || beta == null || gamma == null) return null;
+  return { alpha, beta, gamma, heading };
 }
 
+let haveAbsolute = false;
+
 function onOrientation(event) {
-  const value = readHeading(event);
+  if (event.type === "deviceorientationabsolute") haveAbsolute = true;
+  if (event.type === "deviceorientation" && haveAbsolute && event.webkitCompassHeading == null) {
+    return;
+  }
+  const value = readOrientation(event);
   if (value != null) {
-    heading = value;
+    orientation = value;
     updateCompass();
   }
 }
 
-async function enableCompass() {
+async function enablePointing() {
   const ctor = window.DeviceOrientationEvent;
   if (!ctor) return;
 
@@ -127,7 +185,7 @@ async function enableCompass() {
     if (ok !== "granted") return;
   }
 
-  compassOn = true;
+  pointingOn = true;
   window.addEventListener("deviceorientationabsolute", onOrientation, true);
   window.addEventListener("deviceorientation", onOrientation, true);
   show(compassBtn, false);
@@ -136,7 +194,7 @@ async function enableCompass() {
 
 locate.addEventListener("click", () => void runLookup());
 refresh.addEventListener("click", () => void runLookup());
-compassBtn.addEventListener("click", () => void enableCompass());
+compassBtn.addEventListener("click", () => void enablePointing());
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});

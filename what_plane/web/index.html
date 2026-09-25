@@ -23,11 +23,24 @@
 
       <section class="card hidden" id="result" aria-live="polite">
         <p class="summary" id="summary"></p>
-        <div class="compass" id="compass" aria-hidden="true">
+        <div class="compass fallback" id="compass" aria-hidden="true">
           <div class="compass-ring">
             <span>N</span><span>E</span><span>S</span><span>W</span>
           </div>
           <div class="needle" id="needle"></div>
+          <div class="cdi" id="cdi">
+            <span class="cdi-dot"></span>
+            <span class="cdi-dot"></span>
+            <span class="cdi-dot"></span>
+            <span class="cdi-dot"></span>
+            <span class="cdi-dot"></span>
+            <span class="cdi-dot"></span>
+            <span class="cdi-dot"></span>
+            <span class="cdi-dot"></span>
+            <div class="cdi-bar gs" id="gs"></div>
+            <div class="cdi-bar loc" id="loc"></div>
+            <div class="cdi-center" id="cdi-center"></div>
+          </div>
         </div>
         <p class="bearing hidden" id="bearing"></p>
         <dl class="details" id="details"></dl>
@@ -36,11 +49,12 @@
       <div class="actions">
         <button class="btn primary" id="locate" type="button">Locate &amp; scan</button>
         <button class="btn hidden" id="refresh" type="button">Refresh</button>
-        <button class="btn hidden" id="compass-btn" type="button">Enable compass</button>
+        <button class="btn hidden" id="compass-btn" type="button">Enable pointing</button>
       </div>
 
       <p class="footnote">Nearest by distance — not necessarily the one you are looking at.</p>
     </main>
+    <script src="/pointer.js" defer></script>
     <script src="/app.js" defer></script>
   </body>
 </html>

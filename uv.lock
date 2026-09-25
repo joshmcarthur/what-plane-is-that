@@ -3,7 +3,7 @@ revision = 3
 requires-python = ">=3.12"
 
 [options]
-exclude-newer = "2026-09-17T05:14:29.06614Z"
+exclude-newer = "2026-09-24T02:43:10.063432Z"
 exclude-newer-span = "PT24H"
 
 [[package]]
@@ -838,7 +838,7 @@ wheels = [
 
 [[package]]
 name = "what-plane"
-version = "0.1.0"
+version = "0.3.1"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },

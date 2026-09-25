@@ -5,6 +5,7 @@ from __future__ import annotations
 from what_plane.geo import (
     bounding_box,
     cardinal_direction,
+    elevation_deg,
     format_distance_km,
     haversine_km,
 )
@@ -36,3 +37,25 @@ def test_format_distance_km() -> None:
     assert format_distance_km(0.5) == "500 metres"
     assert format_distance_km(3.2) == "3.2 kilometres"
     assert format_distance_km(12.4) == "12 kilometres"
+
+
+def test_elevation_deg_nearby_level_flight_is_a_small_angle() -> None:
+    angle = elevation_deg(3.2, 1200)
+    assert 6 < angle < 7
+
+
+def test_elevation_deg_overhead_is_near_vertical() -> None:
+    angle = elevation_deg(0.01, 10_000)
+    assert angle > 89
+
+
+def test_elevation_deg_zero_distance_is_plus_or_minus_90() -> None:
+    assert elevation_deg(0.0, 1200) == 90.0
+    assert elevation_deg(0.0, -100) == -90.0
+    assert elevation_deg(0.0, 0) == 0.0
+
+
+def test_elevation_deg_subtracts_observer_altitude() -> None:
+    from_sea_level = elevation_deg(1.0, 1000)
+    from_hill = elevation_deg(1.0, 1000, observer_alt_m=100)
+    assert from_hill < from_sea_level
