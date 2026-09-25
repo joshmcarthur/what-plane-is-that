@@ -1,6 +1,6 @@
 [project]
 name = "what-plane"
-version = "0.3.1"
+version = "0.4.0"
 description = "Return the nearest aircraft to a lat/lng using ADS-B Exchange."
 readme = "README.md"
 requires-python = ">=3.12"
