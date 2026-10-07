@@ -183,7 +183,7 @@ uv run pyright
 uv run pytest
 ```
 
-CI runs linting, formatting, type checking, tests, and a Docker build on every push and pull request. Dependabot opens weekly update PRs for Python, GitHub Actions, and Docker dependencies.
+CI runs linting, formatting, type checking, tests, a Docker build, and a Monkey C compile of the Garmin watch app on every push and pull request. Dependabot opens weekly update PRs for Python, GitHub Actions, and Docker dependencies.
 
 ### Commits and releases
 

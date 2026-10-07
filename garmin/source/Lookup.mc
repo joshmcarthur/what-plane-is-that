@@ -1,25 +1,28 @@
-using Toybox.Application;
-using Toybox.Communications;
-using Toybox.Lang;
-using Toybox.Position;
-using Toybox.Timer;
-using Toybox.WatchUi;
+import Toybox.Application;
+import Toybox.Communications;
+import Toybox.Lang;
+import Toybox.Position;
+import Toybox.Timer;
+import Toybox.WatchUi;
 
 class Lookup {
-    var state = :idle;
-    var data = null;
-    var message = "Press start to scan";
-    var timer = null;
-    var lastInfo = null;
+    var state as Symbol = :idle;
+    var data as Dictionary?;
+    var message as String = "Press start to scan";
+    var timer as Timer.Timer?;
+    var lastInfo as Position.Info?;
 
     function initialize() {
+        data = null;
+        timer = null;
+        lastInfo = null;
     }
 
-    function isBusy() {
+    function isBusy() as Boolean {
         return state == :locating || state == :scanning;
     }
 
-    function start() {
+    function start() as Void {
         if (isBusy()) {
             return;
         }
@@ -39,7 +42,7 @@ class Lookup {
         startTimer(25000);
     }
 
-    function stop() {
+    function stop() as Void {
         cancelTimer();
         Position.enableLocationEvents(Position.LOCATION_DISABLE, null);
         if (state == :locating || state == :scanning) {
@@ -49,12 +52,12 @@ class Lookup {
         }
     }
 
-    function onPosition(info) {
+    function onPosition(info as Position.Info) as Void {
         if (state != :locating) {
             return;
         }
         lastInfo = info;
-        if (info == null || info.position == null || info.accuracy == null) {
+        if (info.position == null || info.accuracy == null) {
             return;
         }
         if (info.accuracy >= Position.QUALITY_USABLE) {
@@ -62,7 +65,7 @@ class Lookup {
         }
     }
 
-    function onTimeout() {
+    function onTimeout() as Void {
         timer = null;
         if (state == :locating) {
             if (lastInfo != null && lastInfo.position != null) {
@@ -76,20 +79,20 @@ class Lookup {
         }
     }
 
-    function onResponse(code, payload) {
+    function onResponse(responseCode as Number, payload as Dictionary or String or Null) as Void {
         cancelTimer();
         if (state != :scanning) {
             return;
         }
 
-        if (code != 200 || payload == null || !(payload instanceof Lang.Dictionary)) {
-            fail(errorMessage(code));
+        if (responseCode != 200 || !(payload instanceof Dictionary)) {
+            fail(errorMessage(responseCode));
             return;
         }
 
-        data = payload;
-        var found = payload.get("found");
-        if (found == true) {
+        var body = payload as Dictionary;
+        data = body;
+        if (body.get("found") == true) {
             state = :result;
             message = "";
         } else {
@@ -99,11 +102,17 @@ class Lookup {
         refresh();
     }
 
-    function fetchNearest(info) {
+    function fetchNearest(info as Position.Info) as Void {
         cancelTimer();
         Position.enableLocationEvents(Position.LOCATION_DISABLE, null);
 
-        var degrees = info.position.toDegrees();
+        var loc = info.position;
+        if (loc == null) {
+            fail("Location unavailable");
+            return;
+        }
+
+        var degrees = loc.toDegrees() as Array<Double>;
         state = :scanning;
         message = "Scanning nearby";
         refresh();
@@ -121,12 +130,9 @@ class Lookup {
         startTimer(20000);
     }
 
-    function serverUrl() {
+    function serverUrl() as String? {
         var raw = Application.Properties.getValue("baseUrl");
-        if (raw == null) {
-            return null;
-        }
-        var url = raw.toString();
+        var url = raw == null ? "" : raw.toString();
         while (url.length() > 0 && url.substring(url.length() - 1, url.length()).equals("/")) {
             url = url.substring(0, url.length() - 1);
         }
@@ -136,7 +142,7 @@ class Lookup {
         return url;
     }
 
-    function errorMessage(code) {
+    function errorMessage(code as Number) as String {
         if (code == 502) {
             return "Aircraft feed unavailable";
         }
@@ -152,13 +158,13 @@ class Lookup {
         if (code == -400 || code == -403) {
             return "Bad response from server";
         }
-        if (code == 0 || code == null) {
+        if (code == 0) {
             return "Lookup failed";
         }
         return "Lookup failed (" + code.toString() + ")";
     }
 
-    function fail(text) {
+    function fail(text as String) as Void {
         cancelTimer();
         Position.enableLocationEvents(Position.LOCATION_DISABLE, null);
         state = :error;
@@ -167,20 +173,20 @@ class Lookup {
         refresh();
     }
 
-    function startTimer(ms) {
+    function startTimer(ms as Number) as Void {
         cancelTimer();
         timer = new Timer.Timer();
         timer.start(method(:onTimeout), ms, false);
     }
 
-    function cancelTimer() {
+    function cancelTimer() as Void {
         if (timer != null) {
             timer.stop();
             timer = null;
         }
     }
 
-    function refresh() {
+    function refresh() as Void {
         WatchUi.requestUpdate();
     }
 }

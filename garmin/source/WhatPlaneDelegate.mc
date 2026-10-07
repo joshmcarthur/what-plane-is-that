@@ -1,19 +1,20 @@
-using Toybox.WatchUi;
+import Toybox.Lang;
+import Toybox.WatchUi;
 
 class WhatPlaneDelegate extends WatchUi.BehaviorDelegate {
-    var lookup;
+    var lookup as Lookup;
 
-    function initialize(lookupService) {
+    function initialize(lookupService as Lookup) {
         BehaviorDelegate.initialize();
         lookup = lookupService;
     }
 
-    function onSelect() {
+    function onSelect() as Boolean {
         lookup.start();
         return true;
     }
 
-    function onBack() {
+    function onBack() as Boolean {
         lookup.stop();
         return false;
     }

@@ -1,22 +1,22 @@
-using Toybox.Graphics;
-using Toybox.Lang;
-using Toybox.WatchUi;
+import Toybox.Graphics;
+import Toybox.Lang;
+import Toybox.WatchUi;
 
 class WhatPlaneView extends WatchUi.View {
-    var lookup;
+    var lookup as Lookup;
 
-    function initialize(lookupService) {
+    function initialize(lookupService as Lookup) {
         View.initialize();
         lookup = lookupService;
     }
 
-    function onShow() {
+    function onShow() as Void {
         if (lookup.state == :idle) {
             lookup.start();
         }
     }
 
-    function onUpdate(dc) {
+    function onUpdate(dc as Dc) as Void {
         var width = dc.getWidth();
         var height = dc.getHeight();
         var cx = width / 2;
@@ -51,7 +51,7 @@ class WhatPlaneView extends WatchUi.View {
         );
     }
 
-    function drawResult(dc, cx, height, maxWidth) {
+    function drawResult(dc as Dc, cx as Number, height as Number, maxWidth as Number) as Void {
         var payload = lookup.data;
         var y = height / 6;
         var gap = 4;
@@ -90,14 +90,14 @@ class WhatPlaneView extends WatchUi.View {
         );
     }
 
-    function hintText() {
+    function hintText() as String {
         if (lookup.state == :error || lookup.state == :empty) {
             return "Start to retry";
         }
         return "Start to scan";
     }
 
-    function headline(payload) {
+    function headline(payload as Dictionary?) as String {
         var flight = asString(dictGet(payload, "flight"));
         if (flight.length() > 0) {
             return flight;
@@ -109,7 +109,7 @@ class WhatPlaneView extends WatchUi.View {
         return "Aircraft";
     }
 
-    function aircraftType(payload) {
+    function aircraftType(payload as Dictionary?) as String {
         var name = asString(dictGet(payload, "type_name"));
         if (name.length() > 0) {
             return name;
@@ -117,7 +117,7 @@ class WhatPlaneView extends WatchUi.View {
         return asString(dictGet(payload, "type"));
     }
 
-    function altitudeText(payload) {
+    function altitudeText(payload as Dictionary?) as String {
         var altitude = dictGet(payload, "altitude_ft");
         if (altitude == null) {
             return "Unknown altitude";
@@ -125,7 +125,7 @@ class WhatPlaneView extends WatchUi.View {
         return toWhole(altitude).toString() + " ft";
     }
 
-    function distanceText(payload) {
+    function distanceText(payload as Dictionary?) as String {
         var km = dictGet(payload, "distance_km");
         var direction = asString(dictGet(payload, "direction"));
         var distance = "Nearby";
@@ -138,16 +138,18 @@ class WhatPlaneView extends WatchUi.View {
         return distance;
     }
 
-    function routeLine(route) {
-        var origin = firstString(route, ["origin_municipality", "origin_iata", "origin_icao"]);
-        var destination = firstString(route, ["destination_municipality", "destination_iata", "destination_icao"]);
+    function routeLine(route as Object?) as String {
+        var originKeys = ["origin_municipality", "origin_iata", "origin_icao"] as Array<String>;
+        var destinationKeys = ["destination_municipality", "destination_iata", "destination_icao"] as Array<String>;
+        var origin = firstString(route, originKeys);
+        var destination = firstString(route, destinationKeys);
         if (origin.length() == 0 || destination.length() == 0) {
             return "";
         }
         return origin + " -> " + destination;
     }
 
-    function firstString(data, keys) {
+    function firstString(data as Object?, keys as Array<String>) as String {
         for (var i = 0; i < keys.size(); i++) {
             var value = asString(dictGet(data, keys[i]));
             if (value.length() > 0) {
@@ -157,36 +159,36 @@ class WhatPlaneView extends WatchUi.View {
         return "";
     }
 
-    function dictGet(data, key) {
-        if (data == null || !(data instanceof Lang.Dictionary)) {
+    function dictGet(data as Object?, key as String) as Object? {
+        if (data == null || !(data instanceof Dictionary)) {
             return null;
         }
-        return data.get(key);
+        return (data as Dictionary).get(key);
     }
 
-    function asString(value) {
+    function asString(value as Object?) as String {
         if (value == null) {
             return "";
         }
         return value.toString();
     }
 
-    function toWhole(value) {
-        if (value instanceof Lang.Float || value instanceof Lang.Double) {
-            return value.toNumber();
+    function toWhole(value as Object) as Number {
+        if (value instanceof Float || value instanceof Double) {
+            return (value as Float).toNumber();
         }
-        return value;
+        return value as Number;
     }
 
-    function formatKm(value) {
-        if (value instanceof Lang.Float || value instanceof Lang.Double) {
-            return value.format("%.1f");
+    function formatKm(value as Object) as String {
+        if (value instanceof Float || value instanceof Double) {
+            return (value as Float).format("%.1f");
         }
         return value.toString();
     }
 
-    function drawLine(dc, text, font, cx, y, maxWidth) {
-        if (text == null || text.length() == 0) {
+    function drawLine(dc as Dc, text as String, font as FontDefinition, cx as Number, y as Number, maxWidth as Number) as Number {
+        if (text.length() == 0) {
             return y;
         }
         var fitted = fitText(dc, text, font, maxWidth);
@@ -194,8 +196,8 @@ class WhatPlaneView extends WatchUi.View {
         return y + dc.getFontHeight(font);
     }
 
-    function drawCentered(dc, text, font, cx, cy, maxWidth) {
-        var fitted = fitText(dc, asString(text), font, maxWidth);
+    function drawCentered(dc as Dc, text as String, font as FontDefinition, cx as Number, cy as Number, maxWidth as Number) as Void {
+        var fitted = fitText(dc, text, font, maxWidth);
         dc.drawText(
             cx,
             cy,
@@ -205,7 +207,7 @@ class WhatPlaneView extends WatchUi.View {
         );
     }
 
-    function fitText(dc, text, font, maxWidth) {
+    function fitText(dc as Dc, text as String, font as FontDefinition, maxWidth as Number) as String {
         if (dc.getTextWidthInPixels(text, font) <= maxWidth) {
             return text;
         }

@@ -27,6 +27,8 @@ monkeydo bin/what-plane.prg <device_id>
 
 Copy the `.prg` to `GARMIN/APPS` on the watch to sideload without the simulator.
 
+CI compiles the app with Garmin's `monkeybrains` compiler for `fenix7`. A successful compile is a syntax, type, and resource check; it does not run the simulator.
+
 ## Usage
 
 Opening the app requests a GPS fix, then `GET /nearest/at?lat=…&lng=…`. On success it shows:
