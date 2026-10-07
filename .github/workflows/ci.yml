@@ -56,41 +56,21 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Cache Connect IQ SDK and devices
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.ciq/sdk
-            ~/.Garmin/ConnectIQ/Devices
-          key: connectiq-sdk-9.2.0-devices-1
-
-      - name: Install Connect IQ SDK
+      - name: Compile watch app
         env:
           SDK_ZIP: connectiq-sdk-lin-9.2.0-2026-06-09-92a1605b2.zip
         run: |
           set -euo pipefail
-          if [ ! -f "$HOME/.ciq/sdk/bin/monkeybrains.jar" ]; then
-            mkdir -p "$HOME/.ciq/sdk"
-            curl -fsSL -o /tmp/ciq-sdk.zip \
-              "https://developer.garmin.com/downloads/connect-iq/sdks/${SDK_ZIP}"
-            unzip -q /tmp/ciq-sdk.zip -d "$HOME/.ciq/sdk"
-          fi
-          if [ ! -d "$HOME/.Garmin/ConnectIQ/Devices/fenix7" ]; then
-            mkdir -p "$HOME/.Garmin/ConnectIQ/Devices"
-            curl -fsSL -L -o /tmp/ciq-devices.tar.gz \
-              "https://github.com/blackshadev/garmin-connectiq-tools/raw/main/devices.tar.gz"
-            tar -xzf /tmp/ciq-devices.tar.gz -C "$HOME/.Garmin/ConnectIQ/Devices" ./fenix7
-          fi
-          test -f "$HOME/.ciq/sdk/bin/monkeybrains.jar"
-          test -f "$HOME/.Garmin/ConnectIQ/Devices/fenix7/compiler.json"
-
-      - name: Compile watch app
-        run: |
-          set -euo pipefail
+          mkdir -p "$HOME/.ciq/sdk" "$HOME/.Garmin/ConnectIQ/Devices" garmin/bin
+          curl -fsSL -o /tmp/ciq-sdk.zip \
+            "https://developer.garmin.com/downloads/connect-iq/sdks/${SDK_ZIP}"
+          unzip -q /tmp/ciq-sdk.zip -d "$HOME/.ciq/sdk"
+          curl -fsSL -L -o /tmp/ciq-devices.tar.gz \
+            "https://github.com/blackshadev/garmin-connectiq-tools/raw/main/devices.tar.gz"
+          tar -xzf /tmp/ciq-devices.tar.gz -C "$HOME/.Garmin/ConnectIQ/Devices" ./fenix7
           openssl genrsa -out /tmp/developer_key.pem 2048
           openssl pkcs8 -topk8 -inform PEM -outform DER \
             -in /tmp/developer_key.pem -out /tmp/developer_key.der -nocrypt
-          mkdir -p garmin/bin
           java -Xms1g -Dfile.encoding=UTF-8 \
             -jar "$HOME/.ciq/sdk/bin/monkeybrains.jar" \
             -f garmin/monkey.jungle \
