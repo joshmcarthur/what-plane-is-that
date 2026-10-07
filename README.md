@@ -47,6 +47,19 @@ The same FastAPI app serves a small installable web UI at `/`.
 
 The PWA calls `GET /nearest/at` with your phone's GPS. Home Assistant keeps using parameter-free `GET /nearest`.
 
+## Garmin watch
+
+A Connect IQ app in `garmin/` does the same lookup from a watch: read the current GPS fix, call `GET /nearest/at`, and show the nearest aircraft.
+
+1. Expose what-plane over **HTTPS**, the same way the PWA needs.
+2. Sideload or build the app from `garmin/` with the [Connect IQ SDK](https://developer.garmin.com/connect-iq/sdk/) (see `garmin/README.md`).
+3. In Garmin Connect / Connect IQ settings, set **Server URL** to that HTTPS origin, for example `https://what-plane.example.com`.
+4. Open **what plane** on the watch. It locates, scans, and shows callsign, type, altitude, and distance. Press **Start** (or tap) to refresh.
+
+The watch talks to the existing `/nearest/at` API. It does not add a new endpoint.
+
+If your device is missing from `garmin/manifest.xml`, add its Connect IQ product id and rebuild.
+
 ## API
 
 ### `GET /nearest`
