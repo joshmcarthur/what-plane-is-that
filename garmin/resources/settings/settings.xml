@@ -1,0 +1,5 @@
+<settings>
+    <setting propertyKey="@Properties.baseUrl" title="@Strings.BaseUrlTitle" prompt="@Strings.BaseUrlPrompt">
+        <settingConfig type="alphaNumeric" maxLength="200" />
+    </setting>
+</settings>

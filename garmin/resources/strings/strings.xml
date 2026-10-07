@@ -1,0 +1,5 @@
+<strings>
+    <string id="AppName">what plane</string>
+    <string id="BaseUrlTitle">Server URL</string>
+    <string id="BaseUrlPrompt">HTTPS URL of your what-plane service</string>
+</strings>

@@ -9,3 +9,8 @@ __pycache__/
 htmlcov/
 dist/
 *.egg-info/
+garmin/bin/
+garmin/*.prg
+garmin/*.iq
+*.der
+developer_key*
