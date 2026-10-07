@@ -58,7 +58,7 @@ A Connect IQ app in `garmin/` does the same lookup from a watch: read the curren
 
 The watch talks to the existing `/nearest/at` API. It does not add a new endpoint.
 
-If your watch is missing from `garmin/manifest.xml`, add its product id and rebuild.
+The layout is generic, so any watch-app with GPS and HTTP works. `garmin/manifest.xml` lists current Garmin watches; CI compiles `fenix7`.
 
 ## API
 

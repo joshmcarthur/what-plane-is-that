@@ -8,4 +8,4 @@ Set **Server URL** in Connect IQ settings to the HTTPS origin of your what-plane
 monkeyc -f monkey.jungle -d <device_id> -o bin/what-plane.prg -y /path/to/developer_key.der
 ```
 
-If your watch is not in `manifest.xml`, add its product id. CI compiles for `fenix7`.
+`manifest.xml` lists current Garmin watches (CI compiles `fenix7`). Add a product id only for a device that is missing.
