@@ -58,7 +58,7 @@ A Connect IQ app in `garmin/` does the same lookup from a watch: read the curren
 
 The watch talks to the existing `/nearest/at` API. It does not add a new endpoint.
 
-If your device is missing from `garmin/manifest.xml`, add its Connect IQ product id and rebuild.
+If your watch is missing from `garmin/manifest.xml`, add its product id and rebuild.
 
 ## API
 

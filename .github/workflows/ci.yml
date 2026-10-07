@@ -79,7 +79,7 @@ jobs:
             mkdir -p "$HOME/.Garmin/ConnectIQ/Devices"
             curl -fsSL -L -o /tmp/ciq-devices.tar.gz \
               "https://github.com/blackshadev/garmin-connectiq-tools/raw/main/devices.tar.gz"
-            tar -xzf /tmp/ciq-devices.tar.gz -C "$HOME/.Garmin/ConnectIQ/Devices"
+            tar -xzf /tmp/ciq-devices.tar.gz -C "$HOME/.Garmin/ConnectIQ/Devices" ./fenix7
           fi
           test -f "$HOME/.ciq/sdk/bin/monkeybrains.jar"
           test -f "$HOME/.Garmin/ConnectIQ/Devices/fenix7/compiler.json"
